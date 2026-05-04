@@ -26,9 +26,13 @@ import { expectStatusOneOf } from '../../helpers/api/assertions';
 test('should create a formula annotation y-axis goal line', async ({
   page,
 }) => {
-  // Look up the existing example chart by name (matches Cypress visitChartByName)
-  const chart = await getChartByName(page, 'Num Births Trend');
-  expect(chart, 'Expected example chart "Num Births Trend" to exist').not.toBe(
+  // Look up the existing example chart by name (matches Cypress visitChartByName).
+  // The original Cypress test used "Num Births Trend", which is no longer in the
+  // YAML-driven example data; "Trends" is the equivalent echarts_timeseries_line
+  // chart loaded by superset/examples/usa_births_names/charts/Trends.yaml.
+  const chartName = 'Trends';
+  const chart = await getChartByName(page, chartName);
+  expect(chart, `Expected example chart "${chartName}" to exist`).not.toBe(
     null,
   );
 
