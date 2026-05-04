@@ -39,7 +39,8 @@ test('should create a formula annotation y-axis goal line', async ({
   // Wait for the initial chart data load triggered by the explore page render
   const initialChartLoad = waitForPost(page, ENDPOINTS.CHART_DATA);
 
-  await page.goto(`/explore/?form_data={"slice_id": ${chart!.id}}`);
+  // Relative path so baseURL's APP_PREFIX (e.g. /app/prefix/) is preserved.
+  await page.goto(`explore/?form_data={"slice_id": ${chart!.id}}`);
 
   const explorePage = new ExplorePage(page);
   await explorePage.waitForPageLoad();
