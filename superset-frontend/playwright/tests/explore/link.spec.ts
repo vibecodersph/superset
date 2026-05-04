@@ -17,9 +17,9 @@
  * under the License.
  */
 
+import type { Page, Locator } from '@playwright/test';
 import { testWithAssets, expect } from '../../helpers/fixtures';
 import { ExplorePage } from '../../pages/ExplorePage';
-import { Select } from '../../components/core';
 import { countChartsByName, getChartByName } from '../../helpers/api/chart';
 import {
   countDashboardsByName,
@@ -27,16 +27,28 @@ import {
 } from '../../helpers/api/dashboard';
 
 /**
- * Default form data for the "World Population" example dataset.
- * Mirrors the Cypress HEALTH_POP_FORM_DATA_DEFAULTS helper used by the
- * original test.
+ * Selects a dashboard in the SaveModal CreatableSelect by typing the title and
+ * clicking the matching option. Works for both existing dashboards (filtered
+ * results) and new dashboards (the "create new" option that the AsyncSelect
+ * renders when `allowNewOptions` is enabled).
  */
-const HEALTH_POP_FORM_DATA_DEFAULTS = {
-  datasource: '2__table',
-  granularity_sqla: 'ds',
-  time_grain_sqla: 'P1D',
-  time_range: '1960-01-01 : 2014-01-02',
-};
+async function selectDashboardOption(
+  page: Page,
+  dashboardForm: Locator,
+  optionText: string,
+): Promise<void> {
+  const combobox = dashboardForm.getByRole('combobox', {
+    name: 'Select a dashboard',
+  });
+  await combobox.click();
+  await combobox.fill(optionText);
+
+  const dashboardOption = page
+    .locator('.ant-select-item-option', { hasText: optionText })
+    .first();
+  await dashboardOption.waitFor({ state: 'visible', timeout: 10_000 });
+  await dashboardOption.click();
+}
 
 const test = testWithAssets.extend<{ explorePage: ExplorePage }>({
   explorePage: async ({ page }, use) => {
@@ -92,15 +104,11 @@ test('should save a chart as new and overwrite it', async ({
 }, testInfo) => {
   const newChartName = `Test chart [${Date.now()}_${testInfo.parallelIndex}]`;
 
-  const formData = {
-    ...HEALTH_POP_FORM_DATA_DEFAULTS,
-    viz_type: 'table',
-    metrics: ['sum__SP_POP_TOTL'],
-    groupby: ['country_name'],
-  };
-
+  // Source from an existing example chart so the chart-data fetch is reliable
+  // across CI environments. The test exercises Save-As + Overwrite, not the
+  // chart-builder form-data path.
   let chartLoad = explorePage.waitForChartDataResponse();
-  await explorePage.visitChartByParams(formData);
+  await explorePage.visitChartByName('Growth Rate');
   await explorePage.waitForChartLoad(chartLoad);
 
   // Save as new chart
@@ -158,13 +166,9 @@ test('should save a chart as new and add to a new dashboard', async ({
   const dashboardForm = page.getByTestId(
     'save-chart-modal-select-dashboard-form',
   );
-  const dashboardSelect = new Select(
-    page,
-    dashboardForm.getByRole('combobox', { name: 'Select a dashboard' }),
-  );
-  // CreatableSelect renders a "new option" matching the typed text, which the
-  // shared Select helper picks up via its option-by-text matcher.
-  await dashboardSelect.selectOption(dashboardTitle);
+  // CreatableSelect renders a "new option" matching the typed text;
+  // selectDashboardOption handles both existing and new options uniformly.
+  await selectDashboardOption(page, dashboardForm, dashboardTitle);
 
   chartLoad = explorePage.waitForChartDataResponse();
   await page.getByTestId('btn-modal-save').click();
@@ -193,7 +197,7 @@ test('should save a chart as new and add to a new dashboard', async ({
 
   // Typing the same dashboard name again should match the existing dashboard
   // we just created, not create another new option.
-  await dashboardSelect.selectOption(dashboardTitle);
+  await selectDashboardOption(page, dashboardForm, dashboardTitle);
 
   chartLoad = explorePage.waitForChartDataResponse();
   await page.getByTestId('btn-modal-save').click();

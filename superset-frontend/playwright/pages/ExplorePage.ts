@@ -19,6 +19,7 @@
 
 import { Page, Locator, Response } from '@playwright/test';
 import { TIMEOUT } from '../utils/constants';
+import { apiPost } from '../helpers/api/requests';
 import { getChartByName } from '../helpers/api/chart';
 
 /**
@@ -162,18 +163,32 @@ export class ExplorePage {
   }
 
   /**
-   * Visits the Explore page with custom form data inlined into the URL.
-   * Mirrors the Cypress `visitChartByParams` command but skips the
-   * `/api/v1/explore/form_data` POST step — the URL parser at
-   * `getParsedExploreURLParams` accepts a `form_data` query param directly,
-   * matching the same code path used by `visitChartByName`.
+   * Posts the given form data to the explore form_data endpoint and visits
+   * the resulting URL. Mirrors the Cypress `visitChartByParams` command.
    *
    * @param formData - The chart form data to submit
    */
   async visitChartByParams(formData: ExploreFormData): Promise<void> {
-    await this.page.goto(
-      `/explore/?form_data=${encodeURIComponent(JSON.stringify(formData))}`,
-    );
+    let datasourceId: number | string | undefined;
+    let datasourceType: string | undefined;
+    if (formData.datasource_id && formData.datasource_type) {
+      datasourceId = formData.datasource_id;
+      datasourceType = formData.datasource_type;
+    } else if (typeof formData.datasource === 'string') {
+      const [idPart, typePart] = formData.datasource.split('__');
+      datasourceId = idPart;
+      datasourceType = typePart;
+    }
+
+    const response = await apiPost(this.page, 'api/v1/explore/form_data', {
+      datasource_id:
+        typeof datasourceId === 'string' ? Number(datasourceId) : datasourceId,
+      datasource_type: datasourceType,
+      form_data: JSON.stringify(formData),
+    });
+    const body = await response.json();
+    const formDataKey = body.key;
+    await this.page.goto(`/explore/?form_data_key=${formDataKey}`);
     await this.waitForPageLoad();
   }
 }
