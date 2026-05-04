@@ -46,7 +46,7 @@ export class ExplorePage {
    * @param sliceId - The chart's slice id
    */
   async gotoBySliceId(sliceId: number): Promise<void> {
-    const formData = encodeURIComponent(`{"slice_id": ${sliceId}}`);
+    const formData = encodeURIComponent(JSON.stringify({ slice_id: sliceId }));
     await this.page.goto(`explore/?form_data=${formData}`);
   }
 

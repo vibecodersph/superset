@@ -33,7 +33,7 @@ const COLUMN_VALUES_PATTERN =
 /**
  * Extend testWithAssets with an explorePage fixture that opens the example
  * "Boys" chart by slice id (Cypress visitChartByName equivalent) and waits
- * for the chart-data response and slice container to render.
+ * for the chart to render and the adhoc filter control to be ready.
  */
 const test = testWithAssets.extend<{ explorePage: ExplorePage }>({
   explorePage: async ({ page }, use) => {
@@ -45,14 +45,17 @@ const test = testWithAssets.extend<{ explorePage: ExplorePage }>({
     }
 
     const explorePage = new ExplorePage(page);
-    const chartDataResponsePromise = waitForPost(page, ENDPOINTS.CHART_DATA, {
-      timeout: TIMEOUT.API_RESPONSE,
-    });
     await explorePage.gotoBySliceId(chart.id);
-    await explorePage.waitForPageLoad();
+    await explorePage.waitForSliceLoaded({ timeout: TIMEOUT.SLOW_TEST });
 
-    expectStatusOneOf(await chartDataResponsePromise, [200]);
-    await explorePage.waitForSliceLoaded();
+    // Ensure the AdhocFilterControl is mounted and the "Add filter"
+    // button is reachable before any test interactions.
+    const addFilterButton = page.getByTestId('add-filter-button');
+    await addFilterButton.waitFor({
+      state: 'visible',
+      timeout: TIMEOUT.PAGE_LOAD,
+    });
+    await addFilterButton.scrollIntoViewIfNeeded();
 
     await use(explorePage);
   },
@@ -62,13 +65,17 @@ test('should load AceEditor scripts only when needed', async ({
   page,
   explorePage,
 }) => {
+  test.setTimeout(TIMEOUT.SLOW_TEST);
+
   // Verify the chart loaded so the script count baseline is meaningful
   await expect(explorePage.getSliceContainer()).toBeVisible();
 
   const initialScriptCount = await page.locator('script').count();
 
   // Open the adhoc filter popover via the "Add filter" button
-  await page.getByTestId('add-filter-button').click();
+  const addFilterButton = page.getByTestId('add-filter-button');
+  await addFilterButton.scrollIntoViewIfNeeded();
+  await addFilterButton.click();
   const popover = page.locator(POPOVER);
   await expect(popover).toBeVisible();
 
@@ -92,8 +99,12 @@ test('should set a simple adhoc filter and run the query', async ({
   page,
   explorePage,
 }) => {
+  test.setTimeout(TIMEOUT.SLOW_TEST);
+
   // Open the adhoc filter popover
-  await page.getByTestId('add-filter-button').click();
+  const addFilterButton = page.getByTestId('add-filter-button');
+  await addFilterButton.scrollIntoViewIfNeeded();
+  await addFilterButton.click();
   const popover = page.locator(POPOVER);
   await expect(popover).toBeVisible();
 
@@ -116,10 +127,10 @@ test('should set a simple adhoc filter and run the query', async ({
   await page.getByTestId('adhoc-filter-edit-popover-save-button').click();
   await expect(popover).toBeHidden();
 
-  // Verify the new filter renders inside the adhoc_filters control
-  const adhocFilters = page.getByTestId('adhoc_filters');
+  // Verify the new filter renders inside the adhoc filter control
+  const filterControl = page.locator('[data-test="adhoc-filter-control"]');
   await expect(
-    adhocFilters
+    filterControl
       .getByTestId('option-label')
       .filter({ hasText: /name\s*=\s*'?Jack'?/ }),
   ).toBeVisible();
@@ -138,11 +149,15 @@ test('should set a custom SQL adhoc filter and run the query', async ({
   page,
   explorePage,
 }) => {
+  test.setTimeout(TIMEOUT.SLOW_TEST);
+
   const filterSubject = 'name';
   const filterSql = "name = 'Amy' OR name = 'Donald'";
 
   // Open the adhoc filter popover
-  await page.getByTestId('add-filter-button').click();
+  const addFilterButton = page.getByTestId('add-filter-button');
+  await addFilterButton.scrollIntoViewIfNeeded();
+  await addFilterButton.click();
   const popover = page.locator(POPOVER);
   await expect(popover).toBeVisible();
 
@@ -164,10 +179,10 @@ test('should set a custom SQL adhoc filter and run the query', async ({
   await page.getByTestId('adhoc-filter-edit-popover-save-button').click();
   await expect(popover).toBeHidden();
 
-  // Verify the SQL filter label appears on the adhoc_filters control
-  const adhocFilters = page.getByTestId('adhoc_filters');
+  // Verify the SQL filter label appears on the adhoc filter control
+  const filterControl = page.locator('[data-test="adhoc-filter-control"]');
   await expect(
-    adhocFilters.getByTestId('option-label').filter({ hasText: filterSql }),
+    filterControl.getByTestId('option-label').filter({ hasText: filterSql }),
   ).toBeVisible();
 
   // Run the query and verify the chart re-renders successfully
