@@ -169,3 +169,28 @@ export async function getDashboardByName(
 
   return null;
 }
+
+/**
+ * Count dashboards matching a dashboard_title filter
+ * @param page - Playwright page instance (provides authentication context)
+ * @param title - The dashboard_title to count
+ * @returns Number of dashboards matching the title
+ */
+export async function countDashboardsByName(
+  page: Page,
+  title: string,
+): Promise<number> {
+  const filter = {
+    filters: [
+      {
+        col: 'dashboard_title',
+        opr: 'eq',
+        value: title,
+      },
+    ],
+  };
+  const queryParam = rison.encode(filter);
+  const response = await apiGet(page, `${ENDPOINTS.DASHBOARD}?q=${queryParam}`);
+  const body = await response.json();
+  return body.count ?? 0;
+}
