@@ -31,22 +31,28 @@ import {
  * clicking the matching option. Works for both existing dashboards (filtered
  * results) and new dashboards (the "create new" option that the AsyncSelect
  * renders when `allowNewOptions` is enabled).
+ *
+ * The accessible name "Select a dashboard" is on the Select wrapper, not the
+ * inner search input, so we click the wrapper to open the dropdown and fill
+ * the inner `.ant-select-selection-search-input` to trigger the search.
  */
 async function selectDashboardOption(
   page: Page,
   dashboardForm: Locator,
   optionText: string,
 ): Promise<void> {
-  const combobox = dashboardForm.getByRole('combobox', {
-    name: 'Select a dashboard',
-  });
-  await combobox.click();
-  await combobox.fill(optionText);
+  await dashboardForm.locator('.ant-select').first().click();
+  await dashboardForm
+    .locator('.ant-select-selection-search-input')
+    .first()
+    .fill(optionText);
 
   const dashboardOption = page
+    .locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden)')
+    .last()
     .locator('.ant-select-item-option', { hasText: optionText })
     .first();
-  await dashboardOption.waitFor({ state: 'visible', timeout: 10_000 });
+  await dashboardOption.waitFor({ state: 'visible', timeout: 15_000 });
   await dashboardOption.click();
 }
 
