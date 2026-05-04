@@ -46,19 +46,44 @@ const test = testWithAssets.extend<{ explorePage: ExplorePage }>({
 
     const explorePage = new ExplorePage(page);
     await explorePage.gotoBySliceId(chart.id);
+    await explorePage.waitForPageLoad({ timeout: TIMEOUT.SLOW_TEST });
     await explorePage.waitForSliceLoaded({ timeout: TIMEOUT.SLOW_TEST });
 
-    // Ensure the AdhocFilterControl is mounted and the "Add filter"
-    // button is reachable before any test interactions.
-    const addFilterButton = page.getByTestId('add-filter-button');
-    await addFilterButton.waitFor({
-      state: 'visible',
-      timeout: TIMEOUT.PAGE_LOAD,
-    });
-    await addFilterButton.scrollIntoViewIfNeeded();
+    // Wait for the adhoc filter control wrapper to mount; tests that
+    // need the "Add filter" button itself wait for it explicitly.
+    await page
+      .locator('[data-test="adhoc-filter-control"]')
+      .waitFor({ state: 'attached', timeout: TIMEOUT.SLOW_TEST });
 
     await use(explorePage);
   },
+});
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status !== testInfo.expectedStatus) {
+    const dataTestSummary = await page
+      .evaluate(() => {
+        const els = Array.from(
+          document.querySelectorAll<HTMLElement>('[data-test]'),
+        );
+        return els
+          .map(el => el.getAttribute('data-test'))
+          .filter(
+            (t): t is string =>
+              !!t &&
+              (t.includes('filter') ||
+                t.includes('adhoc') ||
+                t.includes('slice') ||
+                t.includes('control')),
+          )
+          .slice(0, 50);
+      })
+      .catch(() => [] as string[]);
+    await testInfo.attach('relevant-data-test-attrs.json', {
+      body: JSON.stringify(dataTestSummary, null, 2),
+      contentType: 'application/json',
+    });
+  }
 });
 
 test('should load AceEditor scripts only when needed', async ({
@@ -73,8 +98,13 @@ test('should load AceEditor scripts only when needed', async ({
   const initialScriptCount = await page.locator('script').count();
 
   // Open the adhoc filter popover via the "Add filter" button
-  const addFilterButton = page.getByTestId('add-filter-button');
-  await addFilterButton.scrollIntoViewIfNeeded();
+  const filterControl = page.locator('[data-test="adhoc-filter-control"]');
+  await filterControl.scrollIntoViewIfNeeded();
+  const addFilterButton = filterControl.getByTestId('add-filter-button');
+  await addFilterButton.waitFor({
+    state: 'visible',
+    timeout: TIMEOUT.PAGE_LOAD,
+  });
   await addFilterButton.click();
   const popover = page.locator(POPOVER);
   await expect(popover).toBeVisible();
@@ -102,8 +132,13 @@ test('should set a simple adhoc filter and run the query', async ({
   test.setTimeout(TIMEOUT.SLOW_TEST);
 
   // Open the adhoc filter popover
-  const addFilterButton = page.getByTestId('add-filter-button');
-  await addFilterButton.scrollIntoViewIfNeeded();
+  const filterControl = page.locator('[data-test="adhoc-filter-control"]');
+  await filterControl.scrollIntoViewIfNeeded();
+  const addFilterButton = filterControl.getByTestId('add-filter-button');
+  await addFilterButton.waitFor({
+    state: 'visible',
+    timeout: TIMEOUT.PAGE_LOAD,
+  });
   await addFilterButton.click();
   const popover = page.locator(POPOVER);
   await expect(popover).toBeVisible();
@@ -128,7 +163,6 @@ test('should set a simple adhoc filter and run the query', async ({
   await expect(popover).toBeHidden();
 
   // Verify the new filter renders inside the adhoc filter control
-  const filterControl = page.locator('[data-test="adhoc-filter-control"]');
   await expect(
     filterControl
       .getByTestId('option-label')
@@ -155,8 +189,13 @@ test('should set a custom SQL adhoc filter and run the query', async ({
   const filterSql = "name = 'Amy' OR name = 'Donald'";
 
   // Open the adhoc filter popover
-  const addFilterButton = page.getByTestId('add-filter-button');
-  await addFilterButton.scrollIntoViewIfNeeded();
+  const filterControl = page.locator('[data-test="adhoc-filter-control"]');
+  await filterControl.scrollIntoViewIfNeeded();
+  const addFilterButton = filterControl.getByTestId('add-filter-button');
+  await addFilterButton.waitFor({
+    state: 'visible',
+    timeout: TIMEOUT.PAGE_LOAD,
+  });
   await addFilterButton.click();
   const popover = page.locator(POPOVER);
   await expect(popover).toBeVisible();
@@ -180,7 +219,6 @@ test('should set a custom SQL adhoc filter and run the query', async ({
   await expect(popover).toBeHidden();
 
   // Verify the SQL filter label appears on the adhoc filter control
-  const filterControl = page.locator('[data-test="adhoc-filter-control"]');
   await expect(
     filterControl.getByTestId('option-label').filter({ hasText: filterSql }),
   ).toBeVisible();

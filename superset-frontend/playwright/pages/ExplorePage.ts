@@ -39,15 +39,14 @@ export class ExplorePage {
   }
 
   /**
-   * Navigates to the explore page for a given chart by slice id.
-   * Mirrors the Cypress `visitChartByName` helper which builds an
-   * `/explore/?form_data={"slice_id": ID}` URL.
+   * Navigates to the explore page for a saved chart by slice id.
+   * Uses the canonical `/explore/?slice_id=ID` URL the rest of the
+   * frontend produces when linking to a chart.
    *
    * @param sliceId - The chart's slice id
    */
   async gotoBySliceId(sliceId: number): Promise<void> {
-    const formData = encodeURIComponent(JSON.stringify({ slice_id: sliceId }));
-    await this.page.goto(`explore/?form_data=${formData}`);
+    await this.page.goto(`explore/?slice_id=${sliceId}`);
   }
 
   /**
