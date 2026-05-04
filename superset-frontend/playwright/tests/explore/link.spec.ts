@@ -19,6 +19,7 @@
 
 import { testWithAssets, expect } from '../../helpers/fixtures';
 import { ExplorePage } from '../../pages/ExplorePage';
+import { Select } from '../../components/core';
 import { countChartsByName, getChartByName } from '../../helpers/api/chart';
 import {
   countDashboardsByName,
@@ -157,10 +158,13 @@ test('should save a chart as new and add to a new dashboard', async ({
   const dashboardForm = page.getByTestId(
     'save-chart-modal-select-dashboard-form',
   );
-  await dashboardForm
-    .getByRole('combobox', { name: 'Select a dashboard' })
-    .fill(dashboardTitle);
-  await page.locator(`.ant-select-item[title="${dashboardTitle}"]`).click();
+  const dashboardSelect = new Select(
+    page,
+    dashboardForm.getByRole('combobox', { name: 'Select a dashboard' }),
+  );
+  // CreatableSelect renders a "new option" matching the typed text, which the
+  // shared Select helper picks up via its option-by-text matcher.
+  await dashboardSelect.selectOption(dashboardTitle);
 
   chartLoad = explorePage.waitForChartDataResponse();
   await page.getByTestId('btn-modal-save').click();
@@ -187,10 +191,9 @@ test('should save a chart as new and add to a new dashboard', async ({
   await page.getByTestId('new-chart-name').click();
   await page.getByTestId('new-chart-name').fill(newChartName);
 
-  await dashboardForm
-    .getByRole('combobox', { name: /Select a dashboard/ })
-    .fill(dashboardTitle);
-  await page.locator(`.ant-select-item[title="${dashboardTitle}"]`).click();
+  // Typing the same dashboard name again should match the existing dashboard
+  // we just created, not create another new option.
+  await dashboardSelect.selectOption(dashboardTitle);
 
   chartLoad = explorePage.waitForChartDataResponse();
   await page.getByTestId('btn-modal-save').click();
