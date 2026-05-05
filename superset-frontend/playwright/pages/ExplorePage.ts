@@ -155,7 +155,7 @@ export class ExplorePage {
       );
     }
     await this.page.goto(
-      `/explore/?form_data=${encodeURIComponent(
+      `explore/?form_data=${encodeURIComponent(
         JSON.stringify({ slice_id: chart.id }),
       )}`,
     );
@@ -188,7 +188,7 @@ export class ExplorePage {
     });
     const body = await response.json();
     const formDataKey = body.key;
-    await this.page.goto(`/explore/?form_data_key=${formDataKey}`);
+    await this.page.goto(`explore/?form_data_key=${formDataKey}`);
     await this.waitForPageLoad();
   }
 }
