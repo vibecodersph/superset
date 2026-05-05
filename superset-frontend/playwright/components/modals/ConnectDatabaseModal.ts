@@ -77,14 +77,18 @@ export class ConnectDatabaseModal extends Modal {
    * Get the SQLAlchemy form database name input locator.
    */
   getDatabaseNameInput(): Locator {
-    return this.page.locator(ConnectDatabaseModal.SELECTORS.DATABASE_NAME_INPUT);
+    return this.page.locator(
+      ConnectDatabaseModal.SELECTORS.DATABASE_NAME_INPUT,
+    );
   }
 
   /**
    * Get the SQLAlchemy URI input locator.
    */
   getSqlAlchemyUriInput(): Locator {
-    return this.page.locator(ConnectDatabaseModal.SELECTORS.SQLALCHEMY_URI_INPUT);
+    return this.page.locator(
+      ConnectDatabaseModal.SELECTORS.SQLALCHEMY_URI_INPUT,
+    );
   }
 
   /**
@@ -93,7 +97,9 @@ export class ConnectDatabaseModal extends Modal {
   getSubmitConnectionButton(): Button {
     return new Button(
       this.page,
-      this.page.locator(ConnectDatabaseModal.SELECTORS.SUBMIT_CONNECTION_BUTTON),
+      this.page.locator(
+        ConnectDatabaseModal.SELECTORS.SUBMIT_CONNECTION_BUTTON,
+      ),
     );
   }
 

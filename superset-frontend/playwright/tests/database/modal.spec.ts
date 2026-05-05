@@ -52,7 +52,13 @@ test('should open the dynamic database connection form with empty fields', async
   await connectDatabaseModal.selectFirstPreferredDatabase();
 
   // Connection-detail fields are empty before the user supplies credentials.
-  for (const fieldName of ['host', 'port', 'database', 'username', 'password']) {
+  for (const fieldName of [
+    'host',
+    'port',
+    'database',
+    'username',
+    'password',
+  ]) {
     await expect(
       connectDatabaseModal.getDynamicFormInput(fieldName).element,
     ).toHaveValue('');
@@ -86,12 +92,17 @@ test('should show an error when the dynamic form has a bad host', async ({
   // Fill out the dynamic form with values that will fail DNS resolution
   await connectDatabaseModal.getDynamicFormInput('host').fill('badhost');
   await connectDatabaseModal.getDynamicFormInput('port').fill('5432');
-  await connectDatabaseModal.getDynamicFormInput('username').fill('testusername');
+  await connectDatabaseModal
+    .getDynamicFormInput('username')
+    .fill('testusername');
   await connectDatabaseModal.getDynamicFormInput('database').fill('testdb');
   await connectDatabaseModal.getDynamicFormInput('password').fill('testpass');
 
   // Trigger blur-based validation by clicking outside the form
-  const validateOnBlur = waitForPost(page, '/api/v1/database/validate_parameters');
+  const validateOnBlur = waitForPost(
+    page,
+    '/api/v1/database/validate_parameters',
+  );
   await page.locator('body').click({ position: { x: 0, y: 0 } });
   await validateOnBlur;
 
