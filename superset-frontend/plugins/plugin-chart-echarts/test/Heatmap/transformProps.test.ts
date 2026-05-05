@@ -16,10 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
+import {
+  ChartDataResponseResult,
+  ChartProps,
+  DataRecord,
+  DataRecordValue,
+} from '@superset-ui/core';
 import { supersetTheme } from '@apache-superset/core/theme';
+import type { HeatmapSeriesOption } from 'echarts/charts';
+import type {
+  LegendComponentOption,
+  VisualMapComponentOption,
+} from 'echarts/components';
 import { HeatmapChartProps, HeatmapFormData } from '../../src/Heatmap/types';
 import transformProps from '../../src/Heatmap/transformProps';
+
+// Narrow shapes for the parts of the EChartsOption tree the tests inspect.
+// `echartOptions.xAxis` and `yAxis` are union types in ECharts; the heatmap
+// transform always emits a category axis, so we access only the `data` field.
+type CategoryAxisWithData = { data: DataRecordValue[] };
+// Series data points are emitted as numeric tuples ([xIndex, yIndex, value]
+// or [xIndex, yIndex, value, rank]).
+type HeatmapSeriesPoint = number[];
 
 describe('Heatmap transformProps', () => {
   const baseFormData: HeatmapFormData = {
@@ -45,7 +63,7 @@ describe('Heatmap transformProps', () => {
     valueBounds: [null, null],
   };
 
-  const sparseData = [
+  const sparseData: DataRecord[] = [
     { day_of_week: 'Monday', hour: 9, count: 10 },
     { day_of_week: 'Monday', hour: 14, count: 15 },
     { day_of_week: 'Wednesday', hour: 11, count: 8 },
@@ -56,7 +74,7 @@ describe('Heatmap transformProps', () => {
 
   const createChartProps = (
     formDataOverrides: Partial<HeatmapFormData> = {},
-    data: Record<string, any>[] = sparseData,
+    data: DataRecord[] = sparseData,
   ) =>
     new ChartProps({
       formData: { ...baseFormData, ...formDataOverrides },
@@ -77,86 +95,70 @@ describe('Heatmap transformProps', () => {
     const xAscProps = createChartProps({ sortXAxis: 'alpha_asc' });
     const xAscResult = transformProps(xAscProps as HeatmapChartProps);
     expect(xAscResult.echartOptions.xAxis).toHaveProperty('data');
-    expect((xAscResult.echartOptions.xAxis as any).data).toEqual([
-      'Friday',
-      'Monday',
-      'Thursday',
-      'Tuesday',
-      'Wednesday',
-    ]);
+    expect(
+      (xAscResult.echartOptions.xAxis as CategoryAxisWithData).data,
+    ).toEqual(['Friday', 'Monday', 'Thursday', 'Tuesday', 'Wednesday']);
 
     // X-axis descending
     const xDescProps = createChartProps({ sortXAxis: 'alpha_desc' });
     const xDescResult = transformProps(xDescProps as HeatmapChartProps);
-    expect((xDescResult.echartOptions.xAxis as any).data).toEqual([
-      'Wednesday',
-      'Tuesday',
-      'Thursday',
-      'Monday',
-      'Friday',
-    ]);
+    expect(
+      (xDescResult.echartOptions.xAxis as CategoryAxisWithData).data,
+    ).toEqual(['Wednesday', 'Tuesday', 'Thursday', 'Monday', 'Friday']);
 
     // Y-axis ascending (numeric)
     const yAscProps = createChartProps({ sortYAxis: 'alpha_asc' });
     const yAscResult = transformProps(yAscProps as HeatmapChartProps);
     // Hours are numbers, so they should be sorted numerically
-    expect((yAscResult.echartOptions.yAxis as any).data).toEqual([
-      9, 10, 11, 14, 15, 16,
-    ]);
+    expect(
+      (yAscResult.echartOptions.yAxis as CategoryAxisWithData).data,
+    ).toEqual([9, 10, 11, 14, 15, 16]);
 
     // Y-axis descending (numeric)
     const yDescProps = createChartProps({ sortYAxis: 'alpha_desc' });
     const yDescResult = transformProps(yDescProps as HeatmapChartProps);
     // Numeric descending order
-    expect((yDescResult.echartOptions.yAxis as any).data).toEqual([
-      16, 15, 14, 11, 10, 9,
-    ]);
+    expect(
+      (yDescResult.echartOptions.yAxis as CategoryAxisWithData).data,
+    ).toEqual([16, 15, 14, 11, 10, 9]);
   });
 
   test('should sort axes by metric value', () => {
     const chartPropsXAsc = createChartProps({ sortXAxis: 'value_asc' });
     const resultXAsc = transformProps(chartPropsXAsc as HeatmapChartProps);
     // Wednesday(8) < Tuesday(12) < Thursday(18) < Friday(20) < Monday(25=10+15)
-    expect((resultXAsc.echartOptions.xAxis as any).data).toEqual([
-      'Wednesday',
-      'Tuesday',
-      'Thursday',
-      'Friday',
-      'Monday',
-    ]);
+    expect(
+      (resultXAsc.echartOptions.xAxis as CategoryAxisWithData).data,
+    ).toEqual(['Wednesday', 'Tuesday', 'Thursday', 'Friday', 'Monday']);
 
     const chartPropsXDesc = createChartProps({ sortXAxis: 'value_desc' });
     const resultXDesc = transformProps(chartPropsXDesc as HeatmapChartProps);
     // Monday(25) > Friday(20) > Thursday(18) > Tuesday(12) > Wednesday(8)
-    expect((resultXDesc.echartOptions.xAxis as any).data).toEqual([
-      'Monday',
-      'Friday',
-      'Thursday',
-      'Tuesday',
-      'Wednesday',
-    ]);
+    expect(
+      (resultXDesc.echartOptions.xAxis as CategoryAxisWithData).data,
+    ).toEqual(['Monday', 'Friday', 'Thursday', 'Tuesday', 'Wednesday']);
 
     const chartPropsYAsc = createChartProps({ sortYAxis: 'value_asc' });
     const resultYAsc = transformProps(chartPropsYAsc as HeatmapChartProps);
     // 11(8) < 9(10) < 10(12) < 14(15) < 15(18) < 16(20)
-    expect((resultYAsc.echartOptions.yAxis as any).data).toEqual([
-      11, 9, 10, 14, 15, 16,
-    ]);
+    expect(
+      (resultYAsc.echartOptions.yAxis as CategoryAxisWithData).data,
+    ).toEqual([11, 9, 10, 14, 15, 16]);
 
     const chartPropsYDesc = createChartProps({ sortYAxis: 'value_desc' });
     const resultYDesc = transformProps(chartPropsYDesc as HeatmapChartProps);
     // 16(20) > 15(18) > 14(15) > 10(12) > 9(10) > 11(8)
-    expect((resultYDesc.echartOptions.yAxis as any).data).toEqual([
-      16, 15, 14, 10, 9, 11,
-    ]);
+    expect(
+      (resultYDesc.echartOptions.yAxis as CategoryAxisWithData).data,
+    ).toEqual([16, 15, 14, 10, 9, 11]);
   });
 
   test('should handle no sort option specified', () => {
     const chartProps = createChartProps({});
     const result = transformProps(chartProps as HeatmapChartProps);
 
-    const xAxisData = (result.echartOptions.xAxis as any).data;
-    const yAxisData = (result.echartOptions.yAxis as any).data;
+    const xAxisData = (result.echartOptions.xAxis as CategoryAxisWithData).data;
+    const yAxisData = (result.echartOptions.yAxis as CategoryAxisWithData).data;
 
     // Should maintain order of first appearance
     expect(xAxisData).toEqual([
@@ -170,7 +172,7 @@ describe('Heatmap transformProps', () => {
   });
 
   test('should aggregate metric values for value-based sorting', () => {
-    const dataWithDuplicates = [
+    const dataWithDuplicates: DataRecord[] = [
       { day_of_week: 'Monday', hour: 9, count: 10 },
       { day_of_week: 'Monday', hour: 10, count: 15 },
       { day_of_week: 'Tuesday', hour: 9, count: 5 },
@@ -184,13 +186,13 @@ describe('Heatmap transformProps', () => {
     );
     const result = transformProps(chartProps as HeatmapChartProps);
 
-    const xAxisData = (result.echartOptions.xAxis as any).data;
+    const xAxisData = (result.echartOptions.xAxis as CategoryAxisWithData).data;
     // Tuesday(8) < Wednesday(20) < Monday(25)
     expect(xAxisData).toEqual(['Tuesday', 'Wednesday', 'Monday']);
   });
 
   test('should handle data with null values', () => {
-    const dataWithNulls: Record<string, any>[] = [
+    const dataWithNulls: DataRecord[] = [
       { day_of_week: 'Monday', hour: 9, count: 10 },
       { day_of_week: null, hour: 10, count: 15 },
       { day_of_week: 'Tuesday', hour: null, count: 8 },
@@ -202,13 +204,13 @@ describe('Heatmap transformProps', () => {
     );
     const result = transformProps(chartProps as HeatmapChartProps);
 
-    const xAxisData = (result.echartOptions.xAxis as any).data;
+    const xAxisData = (result.echartOptions.xAxis as CategoryAxisWithData).data;
     // Only non-null values should appear
     expect(xAxisData).toEqual(['Monday', 'Tuesday']);
   });
 
   test('should sort numeric values numerically not alphabetically', () => {
-    const numericData = [
+    const numericData: DataRecord[] = [
       { hour: 1, day: 'Mon', count: 10 },
       { hour: 10, day: 'Mon', count: 15 },
       { hour: 2, day: 'Tue', count: 8 },
@@ -222,11 +224,15 @@ describe('Heatmap transformProps', () => {
     );
 
     // Override colnames to match the new data structure
-    (chartProps as any).queriesData[0].colnames = ['hour', 'day', 'count'];
+    (chartProps.queriesData[0] as ChartDataResponseResult).colnames = [
+      'hour',
+      'day',
+      'count',
+    ];
 
     const result = transformProps(chartProps as HeatmapChartProps);
 
-    const xAxisData = (result.echartOptions.xAxis as any).data;
+    const xAxisData = (result.echartOptions.xAxis as CategoryAxisWithData).data;
     // Should be numeric order: 1, 2, 3, 10, 20
     // NOT alphabetical order: 1, 10, 2, 20, 3
     expect(xAxisData).toEqual([1, 2, 3, 10, 20]);
@@ -239,14 +245,15 @@ describe('Heatmap transformProps', () => {
     });
     const result = transformProps(chartProps as HeatmapChartProps);
 
-    const seriesData = (result.echartOptions.series as any)[0].data;
+    const seriesData = (result.echartOptions.series as HeatmapSeriesOption[])[0]
+      .data as HeatmapSeriesPoint[];
 
     // Each data point should be [xIndex, yIndex, value]
     expect(Array.isArray(seriesData)).toBe(true);
     expect(seriesData.length).toBeGreaterThan(0);
 
     // Check that data points use indices (numbers starting from 0)
-    seriesData.forEach((point: any) => {
+    seriesData.forEach((point: HeatmapSeriesPoint) => {
       expect(Array.isArray(point)).toBe(true);
       expect(point.length).toBe(3);
       // Indices should be numbers
@@ -259,7 +266,7 @@ describe('Heatmap transformProps', () => {
   });
 
   test('should handle mixed numeric and string values in axes', () => {
-    const mixedData = [
+    const mixedData: DataRecord[] = [
       { category: 'A', value: 1, count: 10 },
       { category: 'B', value: 10, count: 15 },
       { category: 'C', value: 2, count: 8 },
@@ -275,7 +282,7 @@ describe('Heatmap transformProps', () => {
       mixedData,
     );
 
-    (chartProps as any).queriesData[0].colnames = [
+    (chartProps.queriesData[0] as ChartDataResponseResult).colnames = [
       'category',
       'value',
       'count',
@@ -283,8 +290,8 @@ describe('Heatmap transformProps', () => {
 
     const result = transformProps(chartProps as HeatmapChartProps);
 
-    const xAxisData = (result.echartOptions.xAxis as any).data;
-    const yAxisData = (result.echartOptions.yAxis as any).data;
+    const xAxisData = (result.echartOptions.xAxis as CategoryAxisWithData).data;
+    const yAxisData = (result.echartOptions.yAxis as CategoryAxisWithData).data;
 
     // X-axis: strings sorted alphabetically
     expect(xAxisData).toEqual(['A', 'B', 'C']);
@@ -293,7 +300,7 @@ describe('Heatmap transformProps', () => {
   });
 
   test('should include rank as 4th dimension when normalized is true', () => {
-    const dataWithRank = [
+    const dataWithRank: DataRecord[] = [
       { day_of_week: 'Monday', hour: 9, count: 10, rank: 0.33 },
       { day_of_week: 'Monday', hour: 14, count: 15, rank: 0.67 },
       { day_of_week: 'Wednesday', hour: 11, count: 8, rank: 0.17 },
@@ -304,14 +311,15 @@ describe('Heatmap transformProps', () => {
 
     const result = transformProps(chartProps as HeatmapChartProps);
 
-    const seriesData = (result.echartOptions.series as any)[0].data;
+    const seriesData = (result.echartOptions.series as HeatmapSeriesOption[])[0]
+      .data as HeatmapSeriesPoint[];
 
     // Each data point should be [xIndex, yIndex, metricValue, rankValue]
     expect(Array.isArray(seriesData)).toBe(true);
     expect(seriesData.length).toBe(4);
 
     // Check that data points have 4 dimensions when normalized
-    seriesData.forEach((point: any) => {
+    seriesData.forEach((point: HeatmapSeriesPoint) => {
       expect(Array.isArray(point)).toBe(true);
       expect(point.length).toBe(4);
       // First two should be indices (numbers)
@@ -326,22 +334,27 @@ describe('Heatmap transformProps', () => {
     });
 
     // visualMap should use dimension 3 (4th element) for coloring
-    expect((result.echartOptions.visualMap as any).dimension).toBe(3);
+    expect(
+      (result.echartOptions.visualMap as VisualMapComponentOption).dimension,
+    ).toBe(3);
   });
 
   test('should use 3 dimensions when normalized is false', () => {
     const chartProps = createChartProps({ normalized: false });
     const result = transformProps(chartProps as HeatmapChartProps);
 
-    const seriesData = (result.echartOptions.series as any)[0].data;
+    const seriesData = (result.echartOptions.series as HeatmapSeriesOption[])[0]
+      .data as HeatmapSeriesPoint[];
 
     // Each data point should be [xIndex, yIndex, metricValue]
-    seriesData.forEach((point: any) => {
+    seriesData.forEach((point: HeatmapSeriesPoint) => {
       expect(point.length).toBe(3);
     });
 
     // visualMap should use dimension 2 (3rd element) for coloring
-    expect((result.echartOptions.visualMap as any).dimension).toBe(2);
+    expect(
+      (result.echartOptions.visualMap as VisualMapComponentOption).dimension,
+    ).toBe(2);
   });
 
   test('should always hide legend regardless of showLegend setting', () => {
@@ -350,13 +363,17 @@ describe('Heatmap transformProps', () => {
     const resultWithLegend = transformProps(
       chartPropsWithLegend as HeatmapChartProps,
     );
-    expect((resultWithLegend.echartOptions.legend as any).show).toBe(false);
+    expect(
+      (resultWithLegend.echartOptions.legend as LegendComponentOption).show,
+    ).toBe(false);
 
     // Test with showLegend: false
     const chartPropsWithoutLegend = createChartProps({ showLegend: false });
     const resultWithoutLegend = transformProps(
       chartPropsWithoutLegend as HeatmapChartProps,
     );
-    expect((resultWithoutLegend.echartOptions.legend as any).show).toBe(false);
+    expect(
+      (resultWithoutLegend.echartOptions.legend as LegendComponentOption).show,
+    ).toBe(false);
   });
 });
