@@ -17,9 +17,10 @@
  * under the License.
  */
 
-import type { Page, Locator } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { testWithAssets, expect } from '../../helpers/fixtures';
 import { ExplorePage } from '../../pages/ExplorePage';
+import { Menu, Select } from '../../components/core';
 import { countChartsByName, getChartByName } from '../../helpers/api/chart';
 import {
   countDashboardsByName,
@@ -27,33 +28,36 @@ import {
 } from '../../helpers/api/dashboard';
 
 /**
- * Selects a dashboard in the SaveModal CreatableSelect by typing the title and
- * clicking the matching option. Works for both existing dashboards (filtered
- * results) and new dashboards (the "create new" option that the AsyncSelect
- * renders when `allowNewOptions` is enabled).
- *
- * The accessible name "Select a dashboard" is on the Select wrapper, not the
- * inner search input, so we click the wrapper to open the dropdown and fill
- * the inner `.ant-select-selection-search-input` to trigger the search.
+ * Selects a dashboard in the SaveModal CreatableSelect by typing the title.
+ * Works for both existing dashboards (filtered results) and new dashboards
+ * (the "create new" option that the AsyncSelect renders when `allowNewOptions`
+ * is enabled).
  */
 async function selectDashboardOption(
   page: Page,
-  dashboardForm: Locator,
   optionText: string,
 ): Promise<void> {
-  await dashboardForm.locator('.ant-select').first().click();
-  await dashboardForm
-    .locator('.ant-select-selection-search-input')
-    .first()
-    .fill(optionText);
+  const select = Select.fromRole(page, 'Select a dashboard');
+  await select.selectOption(optionText);
+}
 
-  const dashboardOption = page
-    .locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden)')
-    .last()
-    .locator('.ant-select-item-option', { hasText: optionText })
+/**
+ * Opens the explore additional-actions dropdown and selects the given submenu
+ * item (e.g. Share → Embed code). The submenu requires hover/keyboard rather
+ * than a plain click, which the shared Menu helper handles with fallbacks.
+ */
+async function selectActionMenuSubmenuItem(
+  page: Page,
+  submenuText: string,
+  itemText: string,
+): Promise<void> {
+  await page.getByLabel('Menu actions trigger').click();
+  const dropdown = page
+    .locator('.ant-dropdown:not(.ant-dropdown-hidden) .ant-dropdown-menu')
     .first();
-  await dashboardOption.waitFor({ state: 'visible', timeout: 15_000 });
-  await dashboardOption.click();
+  await dropdown.waitFor({ state: 'visible' });
+  const menu = new Menu(page, dropdown);
+  await menu.selectSubmenuItem(submenuText, itemText);
 }
 
 const test = testWithAssets.extend<{ explorePage: ExplorePage }>({
@@ -92,9 +96,7 @@ test('should show iframe link in embed code modal', async ({
   await explorePage.visitChartByName('Growth Rate');
   await explorePage.waitForChartLoad(chartLoad);
 
-  await page.getByLabel('Menu actions trigger').click();
-  await page.getByRole('menuitem', { name: 'Share' }).click();
-  await page.getByTestId('embed-code-button').click();
+  await selectActionMenuSubmenuItem(page, 'Share', 'Embed code');
 
   const popover = page.getByTestId('embed-code-popover');
   await expect(popover).toBeVisible();
@@ -169,12 +171,9 @@ test('should save a chart as new and add to a new dashboard', async ({
   await page.getByTestId('new-chart-name').click();
   await page.getByTestId('new-chart-name').fill(newChartName);
 
-  const dashboardForm = page.getByTestId(
-    'save-chart-modal-select-dashboard-form',
-  );
   // CreatableSelect renders a "new option" matching the typed text;
   // selectDashboardOption handles both existing and new options uniformly.
-  await selectDashboardOption(page, dashboardForm, dashboardTitle);
+  await selectDashboardOption(page, dashboardTitle);
 
   chartLoad = explorePage.waitForChartDataResponse();
   await page.getByTestId('btn-modal-save').click();
@@ -203,7 +202,7 @@ test('should save a chart as new and add to a new dashboard', async ({
 
   // Typing the same dashboard name again should match the existing dashboard
   // we just created, not create another new option.
-  await selectDashboardOption(page, dashboardForm, dashboardTitle);
+  await selectDashboardOption(page, dashboardTitle);
 
   chartLoad = explorePage.waitForChartDataResponse();
   await page.getByTestId('btn-modal-save').click();
