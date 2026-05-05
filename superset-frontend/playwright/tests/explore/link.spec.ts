@@ -197,12 +197,14 @@ test('should save a chart as new and add to a new dashboard', async ({
 
   await page.getByTestId('query-save-button').click();
   await page.getByTestId('save-overwrite-radio').check();
-  await page.getByTestId('new-chart-name').click();
-  await page.getByTestId('new-chart-name').fill(newChartName);
 
-  // Typing the same dashboard name again should match the existing dashboard
-  // we just created, not create another new option.
-  await selectDashboardOption(page, dashboardTitle);
+  // The SaveModal pre-populates the chart's existing dashboard in the
+  // CreatableSelect, so re-typing the title would just be a no-op - and the
+  // selected chip intercepts pointer events on the search input. Verify the
+  // dashboard is pre-selected, then trigger the overwrite.
+  await expect(
+    page.locator('.ant-select-selection-item', { hasText: dashboardTitle }),
+  ).toBeVisible();
 
   chartLoad = explorePage.waitForChartDataResponse();
   await page.getByTestId('btn-modal-save').click();
