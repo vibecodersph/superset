@@ -28,11 +28,13 @@ const CREATE_DATABASE_URL = '/api/v1/database/';
 const VALIDATE_TIMEOUT = 30000;
 const CREATE_DB_TIMEOUT = 60000;
 
+const MODAL_SELECTOR = '[data-test="database-modal"]';
+
 test.beforeEach(async ({ page }) => {
   await page.goto(URL.DATABASE_LIST);
 
   // Close any leftover modal before opening a fresh one (mirrors Cypress setup)
-  const modal = page.locator('[data-test="database-modal"]');
+  const modal = page.locator(MODAL_SELECTOR);
   if (await modal.isVisible().catch(() => false)) {
     await page.locator('[aria-label="Close"]').nth(1).click();
     await modal.waitFor({ state: 'hidden', timeout: TIMEOUT.UI_TRANSITION });
@@ -43,36 +45,44 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('add database modal should open the dynamic form', async ({ page }) => {
-  await page.locator('.preferred > :nth-child(1)').click();
+  const modal = page.locator(MODAL_SELECTOR);
+  await modal.locator('.preferred > :nth-child(1)').click();
 
-  await expect(page.locator('input[name="host"]')).toHaveValue('');
-  await expect(page.locator('input[name="port"]')).toHaveValue('');
-  await expect(page.locator('input[name="database"]')).toHaveValue('');
-  await expect(page.locator('input[name="username"]')).toHaveValue('');
-  await expect(page.locator('input[name="password"]')).toHaveValue('');
-  await expect(page.locator('input[name="database_name"]')).toHaveValue('');
+  await expect(modal.locator('input[name="host"]')).toHaveValue('');
+  await expect(modal.locator('input[name="port"]')).toHaveValue('');
+  await expect(modal.locator('input[name="database"]')).toHaveValue('');
+  await expect(modal.locator('input[name="username"]')).toHaveValue('');
+  await expect(modal.locator('input[name="password"]')).toHaveValue('');
+  // database_name is auto-populated with the selected engine's display name.
+  await expect(modal.locator('input[name="database_name"]')).not.toHaveValue(
+    '',
+  );
 });
 
 test('add database modal should open the sqlalchemy form', async ({ page }) => {
-  await page.locator('.preferred > :nth-child(1)').click();
-  await page.locator('[data-test="sqla-connect-btn"]').click();
+  const modal = page.locator(MODAL_SELECTOR);
+  await modal.locator('.preferred > :nth-child(1)').click();
+  await modal.locator('[data-test="sqla-connect-btn"]').click();
 
-  await expect(page.locator('[data-test="database-name-input"]')).toBeVisible();
   await expect(
-    page.locator('[data-test="sqlalchemy-uri-input"]'),
+    modal.locator('[data-test="database-name-input"]'),
+  ).toBeVisible();
+  await expect(
+    modal.locator('[data-test="sqlalchemy-uri-input"]'),
   ).toBeVisible();
 });
 
 test('add database modal should show error alerts on the dynamic form for a bad host', async ({
   page,
 }) => {
-  await page.locator('.preferred > :nth-child(1)').click();
+  const modal = page.locator(MODAL_SELECTOR);
+  await modal.locator('.preferred > :nth-child(1)').click();
 
-  await page.locator('input[name="host"]').fill('badhost');
-  await page.locator('input[name="port"]').fill('5432');
-  await page.locator('input[name="username"]').fill('testusername');
-  await page.locator('input[name="database"]').fill('testdb');
-  await page.locator('input[name="password"]').fill('testpass');
+  await modal.locator('input[name="host"]').fill('badhost');
+  await modal.locator('input[name="port"]').fill('5432');
+  await modal.locator('input[name="username"]').fill('testusername');
+  await modal.locator('input[name="database"]').fill('testdb');
+  await modal.locator('input[name="password"]').fill('testpass');
 
   // Blur to trigger validation, then wait for the validate_parameters call.
   const initialValidate = waitForPost(page, VALIDATE_PARAMETERS_URL, {
@@ -81,7 +91,7 @@ test('add database modal should show error alerts on the dynamic form for a bad 
   await page.locator('body').click({ position: { x: 0, y: 0 } });
   await initialValidate;
 
-  const submitBtn = page.locator('[data-test="btn-submit-connection"]');
+  const submitBtn = modal.locator('[data-test="btn-submit-connection"]');
   await expect(submitBtn).toBeEnabled();
 
   const submitValidate = waitForPost(page, VALIDATE_PARAMETERS_URL, {
@@ -96,7 +106,7 @@ test('add database modal should show error alerts on the dynamic form for a bad 
   await createDb;
 
   await expect(
-    page.locator('.ant-form-item-explain-error', {
+    modal.locator('.ant-form-item-explain-error', {
       hasText: "The hostname provided can't be resolved",
     }),
   ).toBeVisible();
@@ -105,28 +115,29 @@ test('add database modal should show error alerts on the dynamic form for a bad 
 test('add database modal should show error alerts on the dynamic form for a bad port', async ({
   page,
 }) => {
-  await page.locator('.preferred > :nth-child(1)').click();
+  const modal = page.locator(MODAL_SELECTOR);
+  await modal.locator('.preferred > :nth-child(1)').click();
 
   const hostBlurValidate = waitForPost(page, VALIDATE_PARAMETERS_URL, {
     timeout: VALIDATE_TIMEOUT,
   });
-  await page.locator('input[name="host"]').fill('localhost');
+  await modal.locator('input[name="host"]').fill('localhost');
   await page.locator('body').click({ position: { x: 0, y: 0 } });
   await hostBlurValidate;
 
   const fieldsValidate = waitForPost(page, VALIDATE_PARAMETERS_URL, {
     timeout: VALIDATE_TIMEOUT,
   });
-  await page.locator('input[name="port"]').fill('5430');
-  await page.locator('input[name="database"]').fill('testdb');
-  await page.locator('input[name="username"]').fill('testusername');
+  await modal.locator('input[name="port"]').fill('5430');
+  await modal.locator('input[name="database"]').fill('testdb');
+  await modal.locator('input[name="username"]').fill('testusername');
   await fieldsValidate;
 
   const passwordValidate = waitForPost(page, VALIDATE_PARAMETERS_URL);
-  await page.locator('input[name="password"]').fill('testpass');
+  await modal.locator('input[name="password"]').fill('testpass');
   await passwordValidate;
 
-  const submitBtn = page.locator('[data-test="btn-submit-connection"]');
+  const submitBtn = modal.locator('[data-test="btn-submit-connection"]');
   await expect(submitBtn).toBeEnabled();
 
   const firstSubmitValidate = waitForPost(page, VALIDATE_PARAMETERS_URL, {
@@ -145,7 +156,7 @@ test('add database modal should show error alerts on the dynamic form for a bad 
   await createDb;
 
   await expect(
-    page.locator('.ant-form-item-explain-error', {
+    modal.locator('.ant-form-item-explain-error', {
       hasText: 'The port is closed',
     }),
   ).toBeVisible();
