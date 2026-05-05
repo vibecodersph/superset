@@ -120,16 +120,18 @@ test('show error alerts on dynamic form for bad port', async ({ page }) => {
   ]);
 
   await expect(modal.submitButton).toBeEnabled();
-  // First submit click triggers validation only; click outside, then submit
-  // again to fire the actual create request that surfaces the port error.
+  // First submit click triggers validate_parameters; while the button is in
+  // its loading/disabled state, click outside and force a second submit to
+  // fire the actual create request that surfaces the port error. The
+  // `force` clicks mirror Cypress's `click({ force: true })`.
   await Promise.all([
     waitForPost(page, VALIDATE_PARAMETERS_PATH),
-    modal.submitButton.click(),
+    modal.submitButton.click({ force: true }),
   ]);
   await page.locator('body').click({ position: { x: 0, y: 0 } });
   await Promise.all([
     waitForPost(page, DATABASE_PATH, { pathMatch: true }),
-    modal.submitButton.click(),
+    modal.submitButton.click({ force: true }),
   ]);
 
   await expect(modal.getFormError('The port is closed')).toBeVisible();
