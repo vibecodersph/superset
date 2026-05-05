@@ -141,9 +141,14 @@ test('should save a chart as new and overwrite it', async ({
   await page.getByTestId('query-save-button').click();
   await page.getByTestId('save-overwrite-radio').check();
 
-  chartLoad = explorePage.waitForChartDataResponse();
+  // Overwrite issues PUT /api/v1/chart/{id} and does not refetch chart data,
+  // so wait on the PUT response (not chart-data) to confirm the save landed.
+  const overwriteResponse = page.waitForResponse(
+    r =>
+      /\/api\/v1\/chart\/\d+$/.test(r.url()) && r.request().method() === 'PUT',
+  );
   await page.getByTestId('btn-modal-save').click();
-  await explorePage.waitForChartLoad(chartLoad);
+  await overwriteResponse;
 
   // Backend verification: exactly one chart with this name exists
   expect(await countChartsByName(page, newChartName)).toBe(1);
@@ -206,9 +211,14 @@ test('should save a chart as new and add to a new dashboard', async ({
     page.locator('.ant-select-selection-item', { hasText: dashboardTitle }),
   ).toBeVisible();
 
-  chartLoad = explorePage.waitForChartDataResponse();
+  // Overwrite issues PUT /api/v1/chart/{id} and does not refetch chart data,
+  // so wait on the PUT response (not chart-data) to confirm the save landed.
+  const overwriteResponse = page.waitForResponse(
+    r =>
+      /\/api\/v1\/chart\/\d+$/.test(r.url()) && r.request().method() === 'PUT',
+  );
   await page.getByTestId('btn-modal-save').click();
-  await explorePage.waitForChartLoad(chartLoad);
+  await overwriteResponse;
 
   // Backend verification: only one chart and one dashboard with these names
   expect(await countChartsByName(page, chartName)).toBe(1);
