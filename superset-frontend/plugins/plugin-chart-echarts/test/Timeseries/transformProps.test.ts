@@ -870,12 +870,9 @@ describe('legend sorting', () => {
     });
     const transformed = transformProps(chartProps);
 
-    expect((transformed.echartOptions.legend as LegendComponentOption).data).toEqual([
-      'Boston',
-      'San Francisco',
-      'New York',
-      'Milton',
-    ]);
+    expect(
+      (transformed.echartOptions.legend as LegendComponentOption).data,
+    ).toEqual(['Boston', 'San Francisco', 'New York', 'Milton']);
   });
 
   test('sort legend by label ascending', () => {
@@ -886,12 +883,9 @@ describe('legend sorting', () => {
     });
     const transformed = transformProps(chartProps);
 
-    expect((transformed.echartOptions.legend as LegendComponentOption).data).toEqual([
-      'Boston',
-      'Milton',
-      'New York',
-      'San Francisco',
-    ]);
+    expect(
+      (transformed.echartOptions.legend as LegendComponentOption).data,
+    ).toEqual(['Boston', 'Milton', 'New York', 'San Francisco']);
   });
 
   test('sort legend by label descending', () => {
@@ -902,12 +896,9 @@ describe('legend sorting', () => {
     });
     const transformed = transformProps(chartProps);
 
-    expect((transformed.echartOptions.legend as LegendComponentOption).data).toEqual([
-      'San Francisco',
-      'New York',
-      'Milton',
-      'Boston',
-    ]);
+    expect(
+      (transformed.echartOptions.legend as LegendComponentOption).data,
+    ).toEqual(['San Francisco', 'New York', 'Milton', 'Boston']);
   });
 
   test('falls back to scroll for zoomable top legends when toolbox space reduces available width', () => {
@@ -939,9 +930,9 @@ describe('legend sorting', () => {
 
     const transformed = transformProps(chartProps);
 
-    expect((transformed.echartOptions.legend as LegendComponentOption).type).toBe(
-      LegendType.Scroll,
-    );
+    expect(
+      (transformed.echartOptions.legend as LegendComponentOption).type,
+    ).toBe(LegendType.Scroll);
   });
 });
 
@@ -1409,7 +1400,7 @@ test('zoomable small chart preserves bottom padding for the dataZoom slider', ()
   const result = transformProps(chartProps);
   const grid = result.echartOptions.grid as GridComponentOption;
 
-  expect((grid.bottom as number)).toBeGreaterThan(5);
+  expect(grid.bottom as number).toBeGreaterThan(5);
 });
 
 test('boundary: height at exactly 100px uses full axis behavior', () => {
@@ -1473,7 +1464,8 @@ test('x-axis formatter deduplicates consecutive identical labels for coarse time
   });
 
   const transformedProps = transformProps(chartProps);
-  const xAxisResult = transformedProps.echartOptions.xAxis as XAXisComponentOption & {
+  const xAxisResult = transformedProps.echartOptions
+    .xAxis as XAXisComponentOption & {
     axisLabel: {
       formatter: (value: number) => string;
       showMaxLabel?: boolean;

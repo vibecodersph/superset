@@ -372,9 +372,9 @@ describe('Heatmap transformProps', () => {
     const resultWithLegend = transformProps(
       chartPropsWithLegend as HeatmapChartProps,
     );
-    expect(
-      (resultWithLegend.echartOptions.legend as LegendOption).show,
-    ).toBe(false);
+    expect((resultWithLegend.echartOptions.legend as LegendOption).show).toBe(
+      false,
+    );
 
     // Test with showLegend: false
     const chartPropsWithoutLegend = createChartProps({ showLegend: false });
