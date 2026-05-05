@@ -51,18 +51,18 @@ test('should open the dynamic database connection form with empty fields', async
 }) => {
   await connectDatabaseModal.selectFirstPreferredDatabase();
 
-  for (const fieldName of [
-    'host',
-    'port',
-    'database',
-    'username',
-    'password',
-    'database_name',
-  ]) {
+  // Connection-detail fields are empty before the user supplies credentials.
+  for (const fieldName of ['host', 'port', 'database', 'username', 'password']) {
     await expect(
       connectDatabaseModal.getDynamicFormInput(fieldName).element,
     ).toHaveValue('');
   }
+
+  // The display name field is pre-populated with the engine name from the
+  // preferred-database tile (e.g. "PostgreSQL") so we just assert it's visible.
+  await expect(
+    connectDatabaseModal.getDynamicFormInput('database_name').element,
+  ).toBeVisible();
 });
 
 test('should open the SQLAlchemy URI form', async ({
