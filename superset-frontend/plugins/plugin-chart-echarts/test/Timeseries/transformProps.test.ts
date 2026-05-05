@@ -32,7 +32,13 @@ import {
 } from '@superset-ui/core';
 import { GenericDataType } from '@apache-superset/core/common';
 import { EchartsTimeseriesChartProps } from '../../src/types';
-import type { SeriesOption } from 'echarts';
+import type {
+  GridComponentOption,
+  LegendComponentOption,
+  SeriesOption,
+  XAXisComponentOption,
+  YAXisComponentOption,
+} from 'echarts';
 import transformProps from '../../src/Timeseries/transformProps';
 import {
   EchartsTimeseriesSeriesType,
@@ -79,6 +85,8 @@ function createTestQueryData(
 }
 
 type YAxisFormatter = (value: number, index: number) => string;
+
+type NumericYAxisOption = YAXisComponentOption & { splitNumber?: number };
 
 function getYAxisFormatter(
   transformed: ReturnType<typeof transformProps>,
@@ -571,7 +579,7 @@ describe('EchartsTimeseries transformProps', () => {
       queriesData: streamQueriesDataTyped,
     });
     expect(
-      (transformProps(chartProps).echartOptions.series as any[])[0],
+      (transformProps(chartProps).echartOptions.series as SeriesOption[])[0],
     ).toEqual({
       areaStyle: {
         opacity: 0,
@@ -862,7 +870,7 @@ describe('legend sorting', () => {
     });
     const transformed = transformProps(chartProps);
 
-    expect((transformed.echartOptions.legend as any).data).toEqual([
+    expect((transformed.echartOptions.legend as LegendComponentOption).data).toEqual([
       'Boston',
       'San Francisco',
       'New York',
@@ -878,7 +886,7 @@ describe('legend sorting', () => {
     });
     const transformed = transformProps(chartProps);
 
-    expect((transformed.echartOptions.legend as any).data).toEqual([
+    expect((transformed.echartOptions.legend as LegendComponentOption).data).toEqual([
       'Boston',
       'Milton',
       'New York',
@@ -894,7 +902,7 @@ describe('legend sorting', () => {
     });
     const transformed = transformProps(chartProps);
 
-    expect((transformed.echartOptions.legend as any).data).toEqual([
+    expect((transformed.echartOptions.legend as LegendComponentOption).data).toEqual([
       'San Francisco',
       'New York',
       'Milton',
@@ -931,7 +939,7 @@ describe('legend sorting', () => {
 
     const transformed = transformProps(chartProps);
 
-    expect((transformed.echartOptions.legend as any).type).toBe(
+    expect((transformed.echartOptions.legend as LegendComponentOption).type).toBe(
       LegendType.Scroll,
     );
   });
@@ -1233,7 +1241,7 @@ test('should set yAxis max to actual data max for horizontal bar charts', () => 
   const transformedProps = transformProps(chartProps);
 
   // In horizontal orientation, axes are swapped, so yAxis becomes xAxis
-  const xAxisRaw = transformedProps.echartOptions.xAxis as any;
+  const xAxisRaw = transformedProps.echartOptions.xAxis as XAXisComponentOption;
   expect(xAxisRaw.max).toBe(20000); // Should be the actual max value, not rounded
 });
 
@@ -1255,7 +1263,7 @@ test('should set yAxis min and max for diverging horizontal bar charts', () => {
   const transformedProps = transformProps(chartProps);
 
   // In horizontal orientation, axes are swapped, so yAxis becomes xAxis
-  const xAxisRaw = transformedProps.echartOptions.xAxis as any;
+  const xAxisRaw = transformedProps.echartOptions.xAxis as XAXisComponentOption;
   expect(xAxisRaw.max).toBe(20000); // Should be the actual max value
   expect(xAxisRaw.min).toBe(-21000); // Should be the actual min value for diverging bars
 });
@@ -1281,7 +1289,7 @@ test('should not override explicit yAxisBounds for horizontal bar charts', () =>
   const transformedProps = transformProps(chartProps);
 
   // In horizontal orientation, axes are swapped, so yAxis becomes xAxis
-  const xAxisRaw = transformedProps.echartOptions.xAxis as any;
+  const xAxisRaw = transformedProps.echartOptions.xAxis as XAXisComponentOption;
   expect(xAxisRaw.max).toBe(25000); // Should respect explicit bound
   expect(xAxisRaw.min).toBe(0); // Should respect explicit bound
 });
@@ -1307,7 +1315,7 @@ test('should not apply axis bounds calculation when truncateYAxis is false for h
   const transformedProps = transformProps(chartProps);
 
   // In horizontal orientation, axes are swapped, so yAxis becomes xAxis
-  const xAxis = transformedProps.echartOptions.xAxis as any;
+  const xAxis = transformedProps.echartOptions.xAxis as XAXisComponentOption;
   // Should not have explicit max set when truncateYAxis is false
   expect(xAxis.max).toBeUndefined();
 });
@@ -1333,7 +1341,7 @@ test('should not apply axis bounds calculation when seriesType is not Bar for ho
   const transformedProps = transformProps(chartProps);
 
   // In horizontal orientation, axes are swapped, so yAxis becomes xAxis
-  const xAxisRaw = transformedProps.echartOptions.xAxis as any;
+  const xAxisRaw = transformedProps.echartOptions.xAxis as XAXisComponentOption;
   // Should not have explicit max set when seriesType is not Bar
   expect(xAxisRaw.max).toBeUndefined();
 });
@@ -1343,7 +1351,8 @@ test('legend is visible on tall charts when enabled by the user', () => {
     height: 400,
     formData: { showLegend: true },
   });
-  const { legend } = transformProps(chartProps).echartOptions as any;
+  const legend = transformProps(chartProps).echartOptions
+    .legend as LegendComponentOption;
 
   expect(legend.show).toBe(true);
 });
@@ -1353,37 +1362,41 @@ test('legend is hidden on small charts even when enabled by the user', () => {
     height: 80,
     formData: { showLegend: true },
   });
-  const { legend } = transformProps(chartProps).echartOptions as any;
+  const legend = transformProps(chartProps).echartOptions
+    .legend as LegendComponentOption;
 
   expect(legend.show).toBe(false);
 });
 
 test('y-axis labels remain visible on small charts for scale reference', () => {
   const chartProps = createTestChartProps({ height: 80 });
-  const { yAxis } = transformProps(chartProps).echartOptions as any;
+  const yAxis = transformProps(chartProps).echartOptions
+    .yAxis as YAXisComponentOption;
 
-  expect(yAxis.axisLabel.show).toBe(true);
+  expect(yAxis.axisLabel?.show).toBe(true);
 });
 
 test('y-axis labels are hidden on micro charts for a sparkline view', () => {
   const chartProps = createTestChartProps({ height: 40 });
-  const { yAxis } = transformProps(chartProps).echartOptions as any;
+  const yAxis = transformProps(chartProps).echartOptions
+    .yAxis as YAXisComponentOption;
 
-  expect(yAxis.axisLabel.show).toBe(false);
+  expect(yAxis.axisLabel?.show).toBe(false);
 });
 
 test('y-axis tick count scales with chart height', () => {
   const short = transformProps(createTestChartProps({ height: 200 }));
   const tall = transformProps(createTestChartProps({ height: 500 }));
-  const shortYAxis = short.echartOptions.yAxis as any;
-  const tallYAxis = tall.echartOptions.yAxis as any;
+  const shortYAxis = short.echartOptions.yAxis as NumericYAxisOption;
+  const tallYAxis = tall.echartOptions.yAxis as NumericYAxisOption;
 
-  expect(tallYAxis.splitNumber).toBeGreaterThan(shortYAxis.splitNumber);
+  expect(tallYAxis.splitNumber).toBeGreaterThan(shortYAxis.splitNumber!);
 });
 
 test('small chart y-axis uses splitNumber=1 to show only boundary labels', () => {
   const chartProps = createTestChartProps({ height: 80 });
-  const { yAxis } = transformProps(chartProps).echartOptions as any;
+  const yAxis = transformProps(chartProps).echartOptions
+    .yAxis as NumericYAxisOption;
 
   expect(yAxis.splitNumber).toBe(1);
 });
@@ -1394,16 +1407,17 @@ test('zoomable small chart preserves bottom padding for the dataZoom slider', ()
     formData: { zoomable: true },
   });
   const result = transformProps(chartProps);
-  const grid = result.echartOptions.grid as any;
+  const grid = result.echartOptions.grid as GridComponentOption;
 
-  expect(grid.bottom).toBeGreaterThan(5);
+  expect((grid.bottom as number)).toBeGreaterThan(5);
 });
 
 test('boundary: height at exactly 100px uses full axis behavior', () => {
   const chartProps = createTestChartProps({ height: 100 });
-  const { yAxis } = transformProps(chartProps).echartOptions as any;
+  const yAxis = transformProps(chartProps).echartOptions
+    .yAxis as NumericYAxisOption;
 
-  expect(yAxis.axisLabel.show).toBe(true);
+  expect(yAxis.axisLabel?.show).toBe(true);
   expect(yAxis.splitNumber).toBeGreaterThanOrEqual(3);
 });
 
@@ -1412,7 +1426,9 @@ test('boundary: height at 99px triggers small chart behavior', () => {
     height: 99,
     formData: { showLegend: true },
   });
-  const { yAxis, legend } = transformProps(chartProps).echartOptions as any;
+  const { echartOptions } = transformProps(chartProps);
+  const yAxis = echartOptions.yAxis as NumericYAxisOption;
+  const legend = echartOptions.legend as LegendComponentOption;
 
   expect(yAxis.splitNumber).toBe(1);
   expect(legend.show).toBe(false);
@@ -1420,17 +1436,19 @@ test('boundary: height at 99px triggers small chart behavior', () => {
 
 test('boundary: height at exactly 60px shows labels but uses compact axis', () => {
   const chartProps = createTestChartProps({ height: 60 });
-  const { yAxis } = transformProps(chartProps).echartOptions as any;
+  const yAxis = transformProps(chartProps).echartOptions
+    .yAxis as NumericYAxisOption;
 
-  expect(yAxis.axisLabel.show).toBe(true);
+  expect(yAxis.axisLabel?.show).toBe(true);
   expect(yAxis.splitNumber).toBe(1);
 });
 
 test('boundary: height at 59px triggers micro chart behavior', () => {
   const chartProps = createTestChartProps({ height: 59 });
-  const { yAxis } = transformProps(chartProps).echartOptions as any;
+  const yAxis = transformProps(chartProps).echartOptions
+    .yAxis as YAXisComponentOption;
 
-  expect(yAxis.axisLabel.show).toBe(false);
+  expect(yAxis.axisLabel?.show).toBe(false);
 });
 
 test('x-axis formatter deduplicates consecutive identical labels for coarse time grains', () => {
@@ -1455,7 +1473,12 @@ test('x-axis formatter deduplicates consecutive identical labels for coarse time
   });
 
   const transformedProps = transformProps(chartProps);
-  const xAxisResult = transformedProps.echartOptions.xAxis as any;
+  const xAxisResult = transformedProps.echartOptions.xAxis as XAXisComponentOption & {
+    axisLabel: {
+      formatter: (value: number) => string;
+      showMaxLabel?: boolean;
+    };
+  };
   const { formatter } = xAxisResult.axisLabel;
 
   expect(typeof formatter).toBe('function');
@@ -1503,16 +1526,24 @@ test('should assign distinct dash patterns for multiple time offsets consistentl
   const transformed = transformProps(chartProps);
   const series = (transformed.echartOptions.series as SeriesOption[]) || [];
 
-  const series1 = series.find(s => s.name === '1 year ago') as any;
-  const series2 = series.find(s => s.name === '2 years ago') as any;
+  type DashedSeries = SeriesOption & {
+    lineStyle?: { type?: number[] | string };
+    symbol?: string;
+  };
+  const series1 = series.find(s => s.name === '1 year ago') as
+    | DashedSeries
+    | undefined;
+  const series2 = series.find(s => s.name === '2 years ago') as
+    | DashedSeries
+    | undefined;
 
   expect(series1).toBeDefined();
   expect(series2).toBeDefined();
 
-  const pattern1 = series1.lineStyle?.type;
-  const symbol1 = series1.symbol;
-  const pattern2 = series2.lineStyle?.type;
-  const symbol2 = series2.symbol;
+  const pattern1 = series1!.lineStyle?.type;
+  const symbol1 = series1!.symbol;
+  const pattern2 = series2!.lineStyle?.type;
+  const symbol2 = series2!.symbol;
 
   // must be different patterns
   expect(pattern1).not.toEqual(pattern2);
