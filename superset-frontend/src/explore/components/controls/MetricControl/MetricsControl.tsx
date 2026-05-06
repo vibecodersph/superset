@@ -35,7 +35,9 @@ import AdhocMetric from './AdhocMetric';
 import AdhocMetricPopoverTrigger from './AdhocMetricPopoverTrigger';
 import { savedMetricType } from './types';
 
-type MetricColumn = { column_name: string; type: string };
+type MetricColumn = { column_name: string; type?: string };
+type AdhocMetricChildColumn = { column_name: string; type: string };
+type AdhocMetricChildDatasource = Datasource & ISaveableDatasource;
 type AdhocMetricInput = ConstructorParameters<typeof AdhocMetric>[0];
 
 const defaultProps = {
@@ -123,7 +125,7 @@ interface MetricsControlProps {
   value?: unknown;
   columns?: MetricColumn[] | null;
   savedMetrics?: savedMetricType[] | null;
-  datasource?: (Datasource & ISaveableDatasource) | null;
+  datasource?: Record<string, unknown> | null;
   clearable?: boolean;
   isLoading?: boolean;
   [key: string]: unknown;
@@ -243,10 +245,10 @@ const MetricsControl = ({
         <AdhocMetricPopoverTrigger
           adhocMetric={newAdhocMetric}
           onMetricEdit={onNewMetric}
-          columns={columns ?? []}
+          columns={(columns ?? []) as AdhocMetricChildColumn[]}
           savedMetricsOptions={savedMetricOptions}
           savedMetric={emptySavedMetric}
-          datasource={datasource as Datasource & ISaveableDatasource}
+          datasource={datasource as unknown as AdhocMetricChildDatasource}
           isNew
         >
           {trigger}
@@ -299,8 +301,10 @@ const MetricsControl = ({
         option={option as AdhocMetric | savedMetricType | string}
         onMetricEdit={onMetricEdit}
         onRemoveMetric={onRemoveMetric}
-        columns={columns ?? undefined}
-        datasource={datasource ?? undefined}
+        columns={(columns ?? undefined) as AdhocMetricChildColumn[] | undefined}
+        datasource={
+          (datasource ?? undefined) as AdhocMetricChildDatasource | undefined
+        }
         savedMetrics={savedMetrics ?? undefined}
         savedMetricsOptions={getOptionsForSavedMetrics(
           savedMetrics,
