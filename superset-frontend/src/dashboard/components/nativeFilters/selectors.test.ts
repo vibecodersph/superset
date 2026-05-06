@@ -17,7 +17,11 @@
  * under the License.
  */
 import { CHART_TYPE } from 'src/dashboard/util/componentTypes';
-import { NativeFilterType } from '@superset-ui/core';
+import {
+  DataMaskStateWithId,
+  Filters,
+  NativeFilterType,
+} from '@superset-ui/core';
 import {
   extractLabel,
   getAppliedColumnsWithFallback,
@@ -232,7 +236,7 @@ test('getAppliedColumnsWithFallback derives columns from native filters when que
       chartsInScope: [123],
       targets: [{ column: { name: 'name' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
@@ -244,7 +248,7 @@ test('getAppliedColumnsWithFallback derives columns from native filters when que
       filterState: { value: 'John' },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
@@ -271,7 +275,7 @@ test('getAppliedColumnsWithFallback excludes filters not in chart scope', () => 
       chartsInScope: [456], // Different chart
       targets: [{ column: { name: 'name' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
@@ -283,7 +287,7 @@ test('getAppliedColumnsWithFallback excludes filters not in chart scope', () => 
       filterState: { value: 'John' },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
@@ -310,7 +314,7 @@ test('getAppliedColumnsWithFallback excludes filters without values', () => {
       chartsInScope: [123],
       targets: [{ column: { name: 'name' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
@@ -322,7 +326,7 @@ test('getAppliedColumnsWithFallback excludes filters without values', () => {
       filterState: { value: null },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
@@ -349,7 +353,7 @@ test('getAppliedColumnsWithFallback excludes filters without targets', () => {
       chartsInScope: [123],
       targets: [],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
@@ -361,7 +365,7 @@ test('getAppliedColumnsWithFallback excludes filters without targets', () => {
       filterState: { value: 'John' },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
@@ -384,11 +388,11 @@ test('getAppliedColumnsWithFallback excludes non-native filter types', () => {
     },
     filter2: {
       id: 'filter2',
-      type: 'other_type' as any,
+      type: 'other_type',
       chartsInScope: [123],
       targets: [{ column: { name: 'name' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
@@ -400,7 +404,7 @@ test('getAppliedColumnsWithFallback excludes non-native filter types', () => {
       filterState: { value: 'John' },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
@@ -421,10 +425,10 @@ test('getAppliedColumnsWithFallback handles missing dataMask entry for filter', 
       chartsInScope: [123],
       targets: [{ column: { name: 'age' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     // filter1 is missing
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
@@ -445,14 +449,14 @@ test('getAppliedColumnsWithFallback handles empty array values in filterState', 
       chartsInScope: [123],
       targets: [{ column: { name: 'age' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
       filterState: { value: [] },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
@@ -473,14 +477,14 @@ test('getAppliedColumnsWithFallback handles null values in filterState', () => {
       chartsInScope: [123],
       targets: [{ column: { name: 'age' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
       filterState: { value: [null, null] },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
@@ -512,14 +516,14 @@ test('getAppliedColumnsWithFallback returns empty set when fallback params are i
       chartsInScope: [123],
       targets: [{ column: { name: 'age' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
       filterState: { value: '25' },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   // Missing chartId
   expect(getAppliedColumnsWithFallback(chart, nativeFilters, dataMask)).toEqual(
     new Set(),
@@ -549,14 +553,14 @@ test('getAppliedColumnsWithFallback prioritizes query response over fallback', (
       chartsInScope: [123],
       targets: [{ column: { name: 'fallback_column' } }],
     },
-  } as any;
+  } as unknown as Filters;
   const dataMask = {
     filter1: {
       id: 'filter1',
       filterState: { value: '25' },
       extraFormData: {},
     },
-  } as any;
+  } as DataMaskStateWithId;
   const result = getAppliedColumnsWithFallback(
     chart,
     nativeFilters,
