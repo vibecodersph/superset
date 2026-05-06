@@ -20,6 +20,7 @@
 // Specific modal implementations
 export { ChartPropertiesModal } from './ChartPropertiesModal';
 export { ConfirmDialog } from './ConfirmDialog';
+export { ConnectDatabaseModal } from './ConnectDatabaseModal';
 export { DeleteConfirmationModal } from './DeleteConfirmationModal';
 export { DuplicateDatasetModal } from './DuplicateDatasetModal';
 export { EditDatasetModal } from './EditDatasetModal';
