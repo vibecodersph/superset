@@ -18,6 +18,7 @@
  */
 
 import { Page, APIResponse } from '@playwright/test';
+import rison from 'rison';
 import {
   apiGet,
   apiPost,
@@ -28,6 +29,7 @@ import {
 
 export const ENDPOINTS = {
   CHART: 'api/v1/chart/',
+  CHART_DATA: 'api/v1/chart/data',
   CHART_EXPORT: 'api/v1/chart/export/',
 } as const;
 
@@ -101,4 +103,49 @@ export async function apiPutChart(
   options?: ApiRequestOptions,
 ): Promise<APIResponse> {
   return apiPut(page, `${ENDPOINTS.CHART}${chartId}`, data, options);
+}
+
+/**
+ * TypeScript interface for chart search result
+ */
+export interface ChartResult {
+  id: number;
+  slice_name: string;
+  viz_type?: string;
+}
+
+/**
+ * Get a chart by its slice_name
+ * @param page - Playwright page instance (provides authentication context)
+ * @param name - The slice_name to search for
+ * @returns Chart object if found, null if not found
+ */
+export async function getChartByName(
+  page: Page,
+  name: string,
+): Promise<ChartResult | null> {
+  const filter = {
+    filters: [
+      {
+        col: 'slice_name',
+        opr: 'eq',
+        value: name,
+      },
+    ],
+  };
+  const queryParam = rison.encode(filter);
+  const response = await apiGet(page, `${ENDPOINTS.CHART}?q=${queryParam}`, {
+    failOnStatusCode: false,
+  });
+
+  if (!response.ok()) {
+    return null;
+  }
+
+  const body = await response.json();
+  if (body.result && body.result.length > 0) {
+    return body.result[0] as ChartResult;
+  }
+
+  return null;
 }
