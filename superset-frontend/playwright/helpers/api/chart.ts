@@ -18,6 +18,7 @@
  */
 
 import { Page, APIResponse } from '@playwright/test';
+import rison from 'rison';
 import {
   apiGet,
   apiPost,
@@ -101,4 +102,74 @@ export async function apiPutChart(
   options?: ApiRequestOptions,
 ): Promise<APIResponse> {
   return apiPut(page, `${ENDPOINTS.CHART}${chartId}`, data, options);
+}
+
+/**
+ * TypeScript interface for chart search result
+ */
+export interface ChartResult {
+  id: number;
+  slice_name: string;
+  viz_type?: string;
+}
+
+/**
+ * Get a chart by its slice_name
+ * @param page - Playwright page instance (provides authentication context)
+ * @param sliceName - The slice_name to search for
+ * @returns Chart object if found, null if not found
+ */
+export async function getChartByName(
+  page: Page,
+  sliceName: string,
+): Promise<ChartResult | null> {
+  const filter = {
+    filters: [
+      {
+        col: 'slice_name',
+        opr: 'eq',
+        value: sliceName,
+      },
+    ],
+  };
+  const queryParam = rison.encode(filter);
+  const response = await apiGet(page, `${ENDPOINTS.CHART}?q=${queryParam}`, {
+    failOnStatusCode: false,
+  });
+
+  if (!response.ok()) {
+    return null;
+  }
+
+  const body = await response.json();
+  if (body.result && body.result.length > 0) {
+    return body.result[0] as ChartResult;
+  }
+
+  return null;
+}
+
+/**
+ * Count charts matching a slice_name filter
+ * @param page - Playwright page instance (provides authentication context)
+ * @param sliceName - The slice_name to count
+ * @returns Number of charts matching the name
+ */
+export async function countChartsByName(
+  page: Page,
+  sliceName: string,
+): Promise<number> {
+  const filter = {
+    filters: [
+      {
+        col: 'slice_name',
+        opr: 'eq',
+        value: sliceName,
+      },
+    ],
+  };
+  const queryParam = rison.encode(filter);
+  const response = await apiGet(page, `${ENDPOINTS.CHART}?q=${queryParam}`);
+  const body = await response.json();
+  return body.count ?? 0;
 }
