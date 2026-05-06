@@ -23,6 +23,8 @@ import {
   VizType,
 } from '@superset-ui/core';
 import { supersetTheme } from '@apache-superset/core/theme';
+import type { GaugeSeriesOption } from 'echarts/charts';
+import type { GaugeDataItemOption } from 'echarts/types/src/chart/gauge/GaugeSeries';
 import transformProps, {
   getIntervalBoundsAndColors,
 } from '../../src/Gauge/transformProps';
@@ -82,17 +84,18 @@ describe('Echarts Gauge transformProps', () => {
     expect(result.height).toBe(600);
 
     // Test series data
-    const seriesData = (result.echartOptions as any).series[0].data;
+    const seriesData = (result.echartOptions.series as GaugeSeriesOption[])[0]
+      .data as GaugeDataItemOption[];
     expect(seriesData).toHaveLength(1);
     expect(seriesData[0].value).toBe(16595);
     expect(seriesData[0].name).toBe('');
-    expect(seriesData[0].itemStyle.color).toBe('#1f77b4');
+    expect(seriesData[0].itemStyle!.color).toBe('#1f77b4');
 
     // Test detail and title positions
-    expect(seriesData[0].title.offsetCenter).toEqual(['0%', '20%']);
-    expect(seriesData[0].title.fontSize).toBe(14);
-    expect(seriesData[0].detail.offsetCenter).toEqual(['0%', '32.6%']);
-    expect(seriesData[0].detail.fontSize).toBe(16.8);
+    expect(seriesData[0].title!.offsetCenter).toEqual(['0%', '20%']);
+    expect(seriesData[0].title!.fontSize).toBe(14);
+    expect(seriesData[0].detail!.offsetCenter).toEqual(['0%', '32.6%']);
+    expect(seriesData[0].detail!.fontSize).toBe(16.8);
   });
 
   test('should transform chart props for single group by column', () => {
@@ -132,26 +135,27 @@ describe('Echarts Gauge transformProps', () => {
     expect(result.height).toBe(600);
 
     // Test series data
-    const seriesData = (result.echartOptions as any).series[0].data;
+    const seriesData = (result.echartOptions.series as GaugeSeriesOption[])[0]
+      .data as GaugeDataItemOption[];
     expect(seriesData).toHaveLength(2);
 
     // First data point
     expect(seriesData[0].value).toBe(15);
     expect(seriesData[0].name).toBe('year: 1988');
-    expect(seriesData[0].itemStyle.color).toBe('#1f77b4');
-    expect(seriesData[0].title.offsetCenter).toEqual(['0%', '20%']);
-    expect(seriesData[0].title.fontSize).toBe(14);
-    expect(seriesData[0].detail.offsetCenter).toEqual(['0%', '32.6%']);
-    expect(seriesData[0].detail.fontSize).toBe(16.8);
+    expect(seriesData[0].itemStyle!.color).toBe('#1f77b4');
+    expect(seriesData[0].title!.offsetCenter).toEqual(['0%', '20%']);
+    expect(seriesData[0].title!.fontSize).toBe(14);
+    expect(seriesData[0].detail!.offsetCenter).toEqual(['0%', '32.6%']);
+    expect(seriesData[0].detail!.fontSize).toBe(16.8);
 
     // Second data point
     expect(seriesData[1].value).toBe(219);
     expect(seriesData[1].name).toBe('year: 1995');
-    expect(seriesData[1].itemStyle.color).toBe('#ff7f0e');
-    expect(seriesData[1].title.offsetCenter).toEqual(['0%', '48%']);
-    expect(seriesData[1].title.fontSize).toBe(14);
-    expect(seriesData[1].detail.offsetCenter).toEqual(['0%', '60.6%']);
-    expect(seriesData[1].detail.fontSize).toBe(16.8);
+    expect(seriesData[1].itemStyle!.color).toBe('#ff7f0e');
+    expect(seriesData[1].title!.offsetCenter).toEqual(['0%', '48%']);
+    expect(seriesData[1].title!.fontSize).toBe(14);
+    expect(seriesData[1].detail!.offsetCenter).toEqual(['0%', '60.6%']);
+    expect(seriesData[1].detail!.fontSize).toBe(16.8);
   });
 
   test('should transform chart props for multiple group by columns', () => {
@@ -193,26 +197,27 @@ describe('Echarts Gauge transformProps', () => {
     expect(result.height).toBe(600);
 
     // Test series data
-    const seriesData = (result.echartOptions as any).series[0].data;
+    const seriesData = (result.echartOptions.series as GaugeSeriesOption[])[0]
+      .data as GaugeDataItemOption[];
     expect(seriesData).toHaveLength(2);
 
     // First data point
     expect(seriesData[0].value).toBe(140);
     expect(seriesData[0].name).toBe('year: 2011, platform: PC');
-    expect(seriesData[0].itemStyle.color).toBe('#1f77b4');
-    expect(seriesData[0].title.offsetCenter).toEqual(['0%', '20%']);
-    expect(seriesData[0].title.fontSize).toBe(14);
-    expect(seriesData[0].detail.offsetCenter).toEqual(['0%', '32.6%']);
-    expect(seriesData[0].detail.fontSize).toBe(16.8);
+    expect(seriesData[0].itemStyle!.color).toBe('#1f77b4');
+    expect(seriesData[0].title!.offsetCenter).toEqual(['0%', '20%']);
+    expect(seriesData[0].title!.fontSize).toBe(14);
+    expect(seriesData[0].detail!.offsetCenter).toEqual(['0%', '32.6%']);
+    expect(seriesData[0].detail!.fontSize).toBe(16.8);
 
     // Second data point
     expect(seriesData[1].value).toBe(76);
     expect(seriesData[1].name).toBe('year: 2008, platform: PC');
-    expect(seriesData[1].itemStyle.color).toBe('#ff7f0e');
-    expect(seriesData[1].title.offsetCenter).toEqual(['0%', '48%']);
-    expect(seriesData[1].title.fontSize).toBe(14);
-    expect(seriesData[1].detail.offsetCenter).toEqual(['0%', '60.6%']);
-    expect(seriesData[1].detail.fontSize).toBe(16.8);
+    expect(seriesData[1].itemStyle!.color).toBe('#ff7f0e');
+    expect(seriesData[1].title!.offsetCenter).toEqual(['0%', '48%']);
+    expect(seriesData[1].title!.fontSize).toBe(14);
+    expect(seriesData[1].detail!.offsetCenter).toEqual(['0%', '60.6%']);
+    expect(seriesData[1].detail!.fontSize).toBe(16.8);
   });
 
   test('should transform chart props for intervals', () => {
@@ -257,27 +262,28 @@ describe('Echarts Gauge transformProps', () => {
     expect(result.height).toBe(600);
 
     // Test axisLine intervals
-    const { axisLine } = (result.echartOptions as any).series[0];
-    expect(axisLine.roundCap).toBe(false);
-    expect(axisLine.lineStyle.width).toBe(14);
-    expect(axisLine.lineStyle.color).toEqual([
+    const { axisLine } = (result.echartOptions.series as GaugeSeriesOption[])[0];
+    expect(axisLine!.roundCap).toBe(false);
+    expect(axisLine!.lineStyle!.width).toBe(14);
+    expect(axisLine!.lineStyle!.color).toEqual([
       [0.5, '#1f77b4'],
       [1, '#ff7f0e'],
     ]);
 
     // Test series data
-    const seriesData = (result.echartOptions.series as any)[0].data;
+    const seriesData = (result.echartOptions.series as GaugeSeriesOption[])[0]
+      .data as GaugeDataItemOption[];
     expect(seriesData).toHaveLength(2);
 
     // First data point
     expect(seriesData[0].value).toBe(140);
     expect(seriesData[0].name).toBe('year: 2011, platform: PC');
-    expect(seriesData[0].itemStyle.color).toBe('#1f77b4');
+    expect(seriesData[0].itemStyle!.color).toBe('#1f77b4');
 
     // Second data point
     expect(seriesData[1].value).toBe(76);
     expect(seriesData[1].name).toBe('year: 2008, platform: PC');
-    expect(seriesData[1].itemStyle.color).toBe('#ff7f0e');
+    expect(seriesData[1].itemStyle!.color).toBe('#ff7f0e');
   });
 });
 
@@ -327,7 +333,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(10);
     expect(series.max).toBe(100);
@@ -355,7 +361,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(0);
     expect(series.max).toBe(100);
@@ -383,7 +389,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(0);
     expect(series.max).toBe(160);
@@ -411,7 +417,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(0);
     expect(series.max).toBe(90);
@@ -420,7 +426,7 @@ describe('Min/Max calculation and axis labels', () => {
   test('should calculate min/max from data when minVal is empty string', () => {
     const formData: SqlaFormData = {
       ...baseFormData,
-      minVal: '' as any,
+      minVal: '' as unknown as number,
       maxVal: 200,
     };
     const queriesData = [
@@ -439,7 +445,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(0);
     expect(series.max).toBe(200);
@@ -449,7 +455,7 @@ describe('Min/Max calculation and axis labels', () => {
     const formData: SqlaFormData = {
       ...baseFormData,
       minVal: 0,
-      maxVal: 'invalid' as any,
+      maxVal: 'invalid' as unknown as number,
     };
     const queriesData = [
       {
@@ -467,7 +473,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(0);
     expect(series.max).toBe(150);
@@ -495,7 +501,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(-40);
     expect(series.max).toBe(80);
@@ -524,13 +530,13 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(0);
     expect(series.max).toBe(100);
     expect(series.splitNumber).toBe(5);
     expect(series.axisLabel).toBeDefined();
-    expect(series.axisLabel.formatter).toBeDefined();
+    expect(series.axisLabel!.formatter).toBeDefined();
   });
 
   test('should calculate axis label length correctly for different number formats', () => {
@@ -557,11 +563,11 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.axisLabel).toBeDefined();
-    expect(series.axisLabel.formatter).toBeDefined();
-    expect(typeof series.axisLabel.formatter).toBe('function');
+    expect(series.axisLabel!.formatter).toBeDefined();
+    expect(typeof series.axisLabel!.formatter).toBe('function');
   });
 
   test('should integrate interval bounds and colors with calculated min/max', () => {
@@ -588,13 +594,13 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(0);
     expect(series.max).toBe(100);
 
     const { axisLine } = series;
-    expect(axisLine.lineStyle.color).toEqual(
+    expect(axisLine!.lineStyle!.color).toEqual(
       expect.arrayContaining([
         expect.arrayContaining([expect.any(Number), expect.any(String)]),
       ]),
@@ -623,7 +629,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(0);
     expect(series.max).toBe(0);
@@ -632,8 +638,8 @@ describe('Min/Max calculation and axis labels', () => {
   test('should handle string minVal/maxVal that can be converted to numbers', () => {
     const formData: SqlaFormData = {
       ...baseFormData,
-      minVal: '10' as any,
-      maxVal: '200' as any,
+      minVal: '10' as unknown as number,
+      maxVal: '200' as unknown as number,
     };
     const queriesData = [
       {
@@ -651,7 +657,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.min).toBe(10);
     expect(series.max).toBe(200);
@@ -680,7 +686,7 @@ describe('Min/Max calculation and axis labels', () => {
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
-    const series = (result.echartOptions as any).series[0];
+    const series = (result.echartOptions.series as GaugeSeriesOption[])[0];
 
     expect(series.splitNumber).toBe(20);
   });
