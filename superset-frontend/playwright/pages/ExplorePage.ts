@@ -29,10 +29,24 @@ export class ExplorePage {
   private static readonly SELECTORS = {
     DATASOURCE_CONTROL: '[data-test="datasource-control"]',
     VIZ_SWITCHER: '[data-test="fast-viz-switcher"]',
+    SLICE_CONTAINER: '[data-test="slice-container"]',
+    LOADING_INDICATOR: '[data-test="loading-indicator"]',
+    RUN_QUERY_BUTTON: '[data-test="run-query-button"]',
   } as const;
 
   constructor(page: Page) {
     this.page = page;
+  }
+
+  /**
+   * Navigates to the explore page for a saved chart by slice id.
+   * Uses the canonical `/explore/?slice_id=ID` URL the rest of the
+   * frontend produces when linking to a chart.
+   *
+   * @param sliceId - The chart's slice id
+   */
+  async gotoBySliceId(sliceId: number): Promise<void> {
+    await this.page.goto(`explore/?slice_id=${sliceId}`);
   }
 
   /**
@@ -50,6 +64,38 @@ export class ExplorePage {
       state: 'visible',
       timeout,
     });
+  }
+
+  /**
+   * Waits for the chart to render in the slice container.
+   * The slice container is visible once the chart-data response is processed,
+   * and the chart finishes rendering when the inline loading indicator clears.
+   *
+   * @param options - Optional wait options
+   */
+  async waitForSliceLoaded(options?: { timeout?: number }): Promise<void> {
+    const timeout = options?.timeout ?? TIMEOUT.API_RESPONSE;
+    const sliceContainer = this.page.locator(
+      ExplorePage.SELECTORS.SLICE_CONTAINER,
+    );
+    await sliceContainer.waitFor({ state: 'visible', timeout });
+    await sliceContainer
+      .locator(ExplorePage.SELECTORS.LOADING_INDICATOR)
+      .waitFor({ state: 'hidden', timeout });
+  }
+
+  /**
+   * Gets the slice container locator (the rendered chart wrapper).
+   */
+  getSliceContainer(): Locator {
+    return this.page.locator(ExplorePage.SELECTORS.SLICE_CONTAINER);
+  }
+
+  /**
+   * Gets the run query button locator.
+   */
+  getRunQueryButton(): Locator {
+    return this.page.locator(ExplorePage.SELECTORS.RUN_QUERY_BUTTON);
   }
 
   /**
